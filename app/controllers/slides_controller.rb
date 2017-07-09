@@ -1,4 +1,4 @@
-class RemarkController < ApplicationController
+class SlidesController < ApplicationController
   layout 'remark'
 
   def index
