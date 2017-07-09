@@ -1,9 +1,46 @@
 <textarea id="source">
-  <%= @markdown.content %>
+	<%= @markdown.content %>
 </textarea>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
 
-  <script src="https://remarkjs.com/downloads/remark-latest.min.js">
-</script>
 <script>
-  var slideshow = remark.create();
+var hljs = remark.highlighter.engine;
+</script>
+
+<script>
+hljs.registerLanguage('remark', function () {
+  return {
+    contains: [
+      {
+        className: 'keyword',
+        begin: '^#+[^\n]+',
+        relevance: 10
+      },
+      {
+        className: 'comment',
+        begin: '^---?'
+      },
+      {
+        className: 'string',
+        begin: '^\\w+:'
+      },
+      {
+        className: 'literal',
+        begin: '\\{\\{', end: '\\}\\}'
+      },
+      {
+        className: 'string',
+        begin: '\\.\\w+'
+      }
+    ]
+  };
+});
+</script>
+
+<script>
+var slideshow = remark.create({
+	highlightStyle: 'monokai',
+	highlightLanguage: 'remark',
+	highlightLines: true
+});
 </script>
