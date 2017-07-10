@@ -33,6 +33,8 @@ gem 'jbuilder', '~> 2.5'
 gem 'rails_admin'
 gem 'httparty'
 gem 'dropbox_api'
+gem 'carrierwave'
+gem "fog-aws"
 
 # Use Capistrano for deployment
 # gem 'capistrano-rails', group: :development
