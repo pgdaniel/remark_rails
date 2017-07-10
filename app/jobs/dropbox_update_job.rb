@@ -18,6 +18,8 @@ class DropboxUpdateJob < ApplicationJob
       title = entries[i].name.split('.')[0]
 
     markdown = Markdown.find_or_create_by(title: title)
+    # TODO: if markdown.content == response.body...
+    # mark as conflict or create versions
     markdown.content = response.body
     markdown.save
     end
