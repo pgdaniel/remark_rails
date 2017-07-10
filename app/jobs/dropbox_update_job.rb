@@ -4,7 +4,7 @@ class DropboxUpdateJob < ApplicationJob
   def perform
     token = ENV['DROPBOX_OATH2_TOKEN']
     client = DropboxApi::Client.new(token)
-    result = client.list_folder "/Markdown/Remark"
+    result = client.list_folder ENV['PATH_TO_DROPBOX_FOLDER_TO_IMPORT']
 
     entries = result.entries
 
