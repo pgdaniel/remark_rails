@@ -12,4 +12,6 @@
 //
 //= require rails-ujs
 //= require turbolinks
+//= require remark
+//= require highlight.js/lib/highlight
 //= require_tree .

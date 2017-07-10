@@ -1,7 +1,6 @@
 <textarea id="source">
-	<%= @markdown.content %>
+  <%= @markdown.content %>
 </textarea>
-<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
 
 <script>
 var hljs = remark.highlighter.engine;
@@ -39,8 +38,8 @@ hljs.registerLanguage('remark', function () {
 
 <script>
 var slideshow = remark.create({
-	highlightStyle: 'monokai',
-	highlightLanguage: 'remark',
-	highlightLines: true
+  highlightStyle: 'monokai',
+  highlightLanguage: 'remark',
+  highlightLines: true
 });
 </script>
