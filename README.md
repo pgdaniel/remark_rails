@@ -4,7 +4,8 @@
 
 WIP
 
-Rails app to show slides generated from markdown using Remark.js
+Rails app to show slides generated from markdown using
+[Remark.js](https://remarkjs.com/)
 
 Imports markdown files from Dropbox from a specified folder
 
