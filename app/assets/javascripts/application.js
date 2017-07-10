@@ -14,4 +14,5 @@
 //= require turbolinks
 //= require remark
 //= require highlight.js/lib/highlight
+//= require simplemde/dist/simplemde.min
 //= require_tree .
