@@ -1782,6 +1782,12 @@ Keyboard.prototype.addKeyboardEventListeners = function () {
         events.emit('gotoPreviousSlide');
         break;
       case 32: // Space
+        if(event.shiftKey){ // Shift+Space
+          events.emit('gotoPreviousSlide');
+        }else{
+          events.emit('gotoNextSlide');
+        }
+        break;
       case 34: // Page down
       case 39: // Right
       case 40: // Down
@@ -1918,7 +1924,7 @@ function addMessageEventListeners (events) {
       events.emit('gotoSlide', parseInt(cap[1], 10), true);
     }
     else if (message.data === 'toggleBlackout') {
-      events.emit('toggleBlackout');
+      events.emit('toggleBlackout', {propagate: false});
     }
   }
 }
@@ -18555,7 +18561,7 @@ function lex (src, regex, tokens) {
     else if (cap[DEF]) {
       tokens.push({
         type: 'def',
-        id: cap[DEF],
+        id: cap[DEF].toLowerCase(),
         href: cap[DEF_HREF],
         title: cap[DEF_TITLE]
       });
@@ -18721,7 +18727,7 @@ function inheritContent (slide, template) {
   var expandedVariables;
 
   slide.properties.content = slide.content.slice();
-  slide.content = template.content.slice();
+  deepCopyContent(slide, template.content);
 
   expandedVariables = slide.expandVariables(/* contentOnly: */ true);
 
@@ -18730,6 +18736,24 @@ function inheritContent (slide, template) {
   }
 
   delete slide.properties.content;
+}
+
+function deepCopyContent(target, content) {
+  var i;
+
+  target.content = [];
+  for (i = 0; i < content.length; ++i) {
+    if (typeof content[i] === 'string') {
+      target.content.push(content[i]);
+    }
+    else {
+      target.content.push({
+        block: content[i].block,
+        class: content[i].class,
+      });
+      deepCopyContent(target.content[target.content.length-1], content[i].content);
+    }
+  }
 }
 
 function inheritNotes (slide, template) {
@@ -18831,9 +18855,15 @@ function Slideshow (events, dom, options, callback) {
   self.getSlideNumberFormat = getOrDefault('slideNumberFormat', '%current% / %total%');
   self.getCloneTarget = getOrDefault('cloneTarget', '_blank');
 
-  events.on('toggleBlackout', function () {
+  events.on('toggleBlackout', function (opts) {
+    if (opts && opts.propagate === false) return;
+
     if (self.clone && !self.clone.closed) {
       self.clone.postMessage('toggleBlackout', '*');
+    }
+
+    if (window.opener) {
+      window.opener.postMessage('toggleBlackout', '*');
     }
   });
 
@@ -18864,7 +18894,7 @@ function Slideshow (events, dom, options, callback) {
 
     events.emit('slidesChanged');
   }
-  
+
   function loadFromUrl (url, callback) {
     var xhr = new dom.XMLHttpRequest();
     xhr.open('GET', options.sourceUrl, true);
@@ -18989,8 +19019,16 @@ function createSlides (slideshowSource, options) {
       byName[slide.properties.name] = slideViewModel;
     }
 
+    var slideClasses = (slide.properties['class'] || '').split(/,| /)
+      , excludedClasses = options.excludedClasses || []
+      , slideIsIncluded = slideClasses.filter(function (c) {
+          return excludedClasses.indexOf(c) !== -1;
+        }).length === 0;
+
     if (slide.properties.layout !== 'true') {
-      slides.push(slideViewModel);
+      if (slideIsIncluded) {
+        slides.push(slideViewModel);
+      }
       if (slide.properties.name) {
         slides.byName[slide.properties.name] = slideViewModel;
       }
@@ -19208,7 +19246,7 @@ function Parser () { }
  *        ...
  *      ],
  *      content: [
- *        // Any content but content classes are represented as strings
+ *        // Any content except for content classes are represented as strings
  *        'plain text ',
  *        // Content classes are represented as objects
  *        { block: false, class: 'the-class', content: [...] },
@@ -19401,8 +19439,8 @@ function cleanInput(source) {
 /* Automatically generated */
 
 module.exports = {
-  version: "0.14.0",
-  documentStyles: "html.remark-container,body.remark-container{height:100%;width:100%;-webkit-print-color-adjust:exact}.remark-container{background:#d7d8d2;margin:0;overflow:hidden}.remark-container:focus{outline-style:solid;outline-width:1px}.remark-container:-webkit-full-screen{width:100%;height:100%}body:-webkit-full-screen{background:#000000}body:-moz-full-screen{background:#000000}body:fullscreen{background:#000000}.remark-slides-area{position:relative;height:100%;width:100%}.remark-slide-container{display:none;position:absolute;height:100%;width:100%;page-break-after:always}.remark-slide-scaler{background-color:transparent;overflow:hidden;position:absolute;-webkit-transform-origin:top left;-moz-transform-origin:top left;transform-origin:top-left;-moz-box-shadow:0 0 30px #888;-webkit-box-shadow:0 0 30px #888;box-shadow:0 0 30px #888}.remark-slide{height:100%;width:100%;display:table;table-layout:fixed}.remark-slide>.left{text-align:left}.remark-slide>.center{text-align:center}.remark-slide>.right{text-align:right}.remark-slide>.top{vertical-align:top}.remark-slide>.middle{vertical-align:middle}.remark-slide>.bottom{vertical-align:bottom}.remark-slide-content{background-color:#fff;background-position:center;background-repeat:no-repeat;display:table-cell;font-size:20px;padding:1em 4em 1em 4em}.remark-slide-content h1{font-size:55px}.remark-slide-content h2{font-size:45px}.remark-slide-content h3{font-size:35px}.remark-slide-content .left{display:block;text-align:left}.remark-slide-content .center{display:block;text-align:center}.remark-slide-content .right{display:block;text-align:right}.remark-slide-number{bottom:12px;opacity:.5;position:absolute;right:20px}.remark-slide-notes{border-top:3px solid black;position:absolute;display:none}.remark-code{font-size:18px}.remark-code-line{min-height:1em}.remark-code-line-highlighted{background-color:rgba(255,255,0,0.5)}.remark-code-span-highlighted{background-color:rgba(255,255,0,0.5);padding:1px 2px 2px 2px}.remark-visible{display:block;z-index:2}.remark-fading{display:block;z-index:1}.remark-fading .remark-slide-scaler{-moz-box-shadow:none;-webkit-box-shadow:none;box-shadow:none}.remark-backdrop{position:absolute;top:0;bottom:0;left:0;right:0;display:none;background:#000;z-index:2}.remark-pause{bottom:0;top:0;right:0;left:0;display:none;position:absolute;z-index:1000}.remark-pause .remark-pause-lozenge{margin-top:30%;text-align:center}.remark-pause .remark-pause-lozenge span{color:white;background:black;border:2px solid black;border-radius:20px;padding:20px 30px;font-family:Helvetica,arial,freesans,clean,sans-serif;font-size:42pt;font-weight:bold}.remark-container.remark-presenter-mode.remark-pause-mode .remark-pause{display:block}.remark-container.remark-presenter-mode.remark-pause-mode .remark-backdrop{display:block;opacity:.5}.remark-help{bottom:0;top:0;right:0;left:0;display:none;position:absolute;z-index:1000;-webkit-transform-origin:top left;-moz-transform-origin:top left;transform-origin:top-left}.remark-help .remark-help-content{color:white;font-family:Helvetica,arial,freesans,clean,sans-serif;font-size:12pt;position:absolute;top:5%;bottom:10%;height:10%;left:5%;width:90%}.remark-help .remark-help-content h1{font-size:36px}.remark-help .remark-help-content td{color:white;font-size:12pt;padding:10px}.remark-help .remark-help-content td:first-child{padding-left:0}.remark-help .remark-help-content .key{background:white;color:black;min-width:1em;display:inline-block;padding:3px 6px;text-align:center;border-radius:4px;font-size:14px}.remark-help .dismiss{top:85%}.remark-container.remark-help-mode .remark-help{display:block}.remark-container.remark-help-mode .remark-backdrop{display:block;opacity:.95}.remark-preview-area{bottom:2%;left:2%;display:none;opacity:.5;position:absolute;height:47.25%;width:48%}.remark-preview-area .remark-slide-container{display:block}.remark-notes-area{background:#fff;bottom:0;color:black;display:none;left:52%;overflow:hidden;position:absolute;right:0;top:0}.remark-notes-area .remark-top-area{height:50px;left:20px;position:absolute;right:10px;top:10px}.remark-notes-area .remark-bottom-area{position:absolute;top:75px;bottom:10px;left:20px;right:10px}.remark-notes-area .remark-bottom-area .remark-toggle{display:block;text-decoration:none;font-family:Helvetica,arial,freesans,clean,sans-serif;height:21px;font-size:.75em;text-transform:uppercase;color:#ccc}.remark-notes-area .remark-bottom-area .remark-notes-current-area{height:70%;position:relative}.remark-notes-area .remark-bottom-area .remark-notes-current-area .remark-notes{clear:both;border-top:1px solid #f5f5f5;position:absolute;top:22px;bottom:0;left:0;right:0;overflow-y:auto;margin-bottom:20px;padding-top:10px}.remark-notes-area .remark-bottom-area .remark-notes-preview-area{height:30%;position:relative}.remark-notes-area .remark-bottom-area .remark-notes-preview-area .remark-notes-preview{border-top:1px solid #f5f5f5;position:absolute;top:22px;bottom:0;left:0;right:0;overflow-y:auto}.remark-notes-area .remark-bottom-area .remark-notes>*:first-child,.remark-notes-area .remark-bottom-area .remark-notes-preview>*:first-child{margin-top:5px}.remark-notes-area .remark-bottom-area .remark-notes>*:last-child,.remark-notes-area .remark-bottom-area .remark-notes-preview>*:last-child{margin-bottom:0}.remark-toolbar{color:#979892;vertical-align:middle}.remark-toolbar .remark-toolbar-link{border:2px solid #d7d8d2;color:#979892;display:inline-block;padding:2px 2px;text-decoration:none;text-align:center;min-width:20px}.remark-toolbar .remark-toolbar-link:hover{border-color:#979892;color:#676862}.remark-toolbar .remark-toolbar-timer{border:2px solid black;border-radius:10px;background:black;color:white;display:inline-block;float:right;padding:5px 10px;font-family:sans-serif;font-weight:bold;font-size:175%;text-decoration:none;text-align:center}.remark-container.remark-presenter-mode .remark-slides-area{top:2%;left:2%;height:47.25%;width:48%}.remark-container.remark-presenter-mode .remark-preview-area{display:block}.remark-container.remark-presenter-mode .remark-notes-area{display:block}.remark-container.remark-blackout-mode:not(.remark-presenter-mode) .remark-backdrop{display:block;opacity:.99}.remark-container.remark-mirrored-mode:not(.remark-presenter-mode) .remark-slides-area{-webkit-transform:scaleX(-1);-moz-transform:scaleX(-1);-ms-transform:scaleX(-1);-o-transform:scaleX(-1)}@media print{.remark-container{overflow:visible;background-color:#fff}.remark-container.remark-presenter-mode .remark-slides-area{top:0;left:0;height:100%;width:681px}.remark-container.remark-presenter-mode .remark-preview-area,.remark-container.remark-presenter-mode .remark-notes-area{display:none}.remark-container.remark-presenter-mode .remark-slide-notes{display:block;margin-left:30px;width:621px}.remark-slide-container{display:block;position:relative}.remark-slide-scaler{-moz-box-shadow:none;-webkit-box-shadow:none;-webkit-transform-origin:initial;box-shadow:none}}@page{margin:0}",
+  version: "0.14.1",
+  documentStyles: "html.remark-container,body.remark-container{height:100%;width:100%;-webkit-print-color-adjust:exact}.remark-container{background:#d7d8d2;margin:0;overflow:hidden}.remark-container:focus{outline-style:solid;outline-width:1px}.remark-container:-webkit-full-screen{width:100%;height:100%}body:-webkit-full-screen{background:#000000}body:-moz-full-screen{background:#000000}body:fullscreen{background:#000000}.remark-slides-area{position:relative;height:100%;width:100%}.remark-slide-container{display:none;position:absolute;height:100%;width:100%;page-break-after:always}.remark-slide-scaler{background-color:transparent;overflow:auto;position:absolute;-webkit-transform-origin:top left;-moz-transform-origin:top left;transform-origin:top-left;-moz-box-shadow:0 0 30px #888;-webkit-box-shadow:0 0 30px #888;box-shadow:0 0 30px #888}.remark-slide{height:100%;width:100%;display:table;table-layout:fixed;position:relative}.remark-slide>.left{text-align:left}.remark-slide>.center{text-align:center}.remark-slide>.right{text-align:right}.remark-slide>.top{vertical-align:top}.remark-slide>.middle{vertical-align:middle}.remark-slide>.bottom{vertical-align:bottom}.remark-slide-content{background-color:#fff;background-position:center;background-repeat:no-repeat;display:table-cell;font-size:20px;padding:1em 4em 1em 4em}.remark-slide-content h1{font-size:55px}.remark-slide-content h2{font-size:45px}.remark-slide-content h3{font-size:35px}.remark-slide-content .left{display:block;text-align:left}.remark-slide-content .center{display:block;text-align:center}.remark-slide-content .right{display:block;text-align:right}.remark-slide-number{bottom:12px;opacity:.5;position:absolute;right:20px}.remark-slide-notes{border-top:3px solid black;position:absolute;display:none}.remark-code{font-size:18px}.remark-code-line{min-height:1em}.remark-code-line-highlighted{background-color:rgba(255,255,0,0.5)}.remark-code-span-highlighted{background-color:rgba(255,255,0,0.5);padding:1px 2px 2px 2px}.remark-visible{display:block;z-index:2}.remark-fading{display:block;z-index:1}.remark-fading .remark-slide-scaler{-moz-box-shadow:none;-webkit-box-shadow:none;box-shadow:none}.remark-backdrop{position:absolute;top:0;bottom:0;left:0;right:0;display:none;background:#000;z-index:2}.remark-pause{bottom:0;top:0;right:0;left:0;display:none;position:absolute;z-index:1000}.remark-pause .remark-pause-lozenge{margin-top:30%;text-align:center}.remark-pause .remark-pause-lozenge span{color:white;background:black;border:2px solid black;border-radius:20px;padding:20px 30px;font-family:Helvetica,arial,freesans,clean,sans-serif;font-size:42pt;font-weight:bold}.remark-container.remark-presenter-mode.remark-pause-mode .remark-pause{display:block}.remark-container.remark-presenter-mode.remark-pause-mode .remark-backdrop{display:block;opacity:.5}.remark-help{bottom:0;top:0;right:0;left:0;display:none;position:absolute;z-index:1000;-webkit-transform-origin:top left;-moz-transform-origin:top left;transform-origin:top-left}.remark-help .remark-help-content{color:white;font-family:Helvetica,arial,freesans,clean,sans-serif;font-size:12pt;position:absolute;top:5%;bottom:10%;height:10%;left:5%;width:90%}.remark-help .remark-help-content h1{font-size:36px}.remark-help .remark-help-content td{color:white;font-size:12pt;padding:10px}.remark-help .remark-help-content td:first-child{padding-left:0}.remark-help .remark-help-content .key{background:white;color:black;min-width:1em;display:inline-block;padding:3px 6px;text-align:center;border-radius:4px;font-size:14px}.remark-help .dismiss{top:85%}.remark-container.remark-help-mode .remark-help{display:block}.remark-container.remark-help-mode .remark-backdrop{display:block;opacity:.95}.remark-preview-area{bottom:2%;left:2%;display:none;opacity:.5;position:absolute;height:47.25%;width:48%}.remark-preview-area .remark-slide-container{display:block}.remark-notes-area{background:#fff;bottom:0;color:black;display:none;left:52%;overflow:hidden;position:absolute;right:0;top:0}.remark-notes-area .remark-top-area{height:50px;left:20px;position:absolute;right:10px;top:10px}.remark-notes-area .remark-bottom-area{position:absolute;top:75px;bottom:10px;left:20px;right:10px}.remark-notes-area .remark-bottom-area .remark-toggle{display:block;text-decoration:none;font-family:Helvetica,arial,freesans,clean,sans-serif;height:21px;font-size:.75em;text-transform:uppercase;color:#ccc}.remark-notes-area .remark-bottom-area .remark-notes-current-area{height:70%;position:relative}.remark-notes-area .remark-bottom-area .remark-notes-current-area .remark-notes{clear:both;border-top:1px solid #f5f5f5;position:absolute;top:22px;bottom:0;left:0;right:0;overflow-y:auto;margin-bottom:20px;padding-top:10px}.remark-notes-area .remark-bottom-area .remark-notes-preview-area{height:30%;position:relative}.remark-notes-area .remark-bottom-area .remark-notes-preview-area .remark-notes-preview{border-top:1px solid #f5f5f5;position:absolute;top:22px;bottom:0;left:0;right:0;overflow-y:auto}.remark-notes-area .remark-bottom-area .remark-notes>*:first-child,.remark-notes-area .remark-bottom-area .remark-notes-preview>*:first-child{margin-top:5px}.remark-notes-area .remark-bottom-area .remark-notes>*:last-child,.remark-notes-area .remark-bottom-area .remark-notes-preview>*:last-child{margin-bottom:0}.remark-toolbar{color:#979892;vertical-align:middle}.remark-toolbar .remark-toolbar-link{border:2px solid #d7d8d2;color:#979892;display:inline-block;padding:2px 2px;text-decoration:none;text-align:center;min-width:20px}.remark-toolbar .remark-toolbar-link:hover{border-color:#979892;color:#676862}.remark-toolbar .remark-toolbar-timer{border:2px solid black;border-radius:10px;background:black;color:white;display:inline-block;float:right;padding:5px 10px;font-family:sans-serif;font-weight:bold;font-size:175%;text-decoration:none;text-align:center}.remark-container.remark-presenter-mode .remark-slides-area{top:2%;left:2%;height:47.25%;width:48%}.remark-container.remark-presenter-mode .remark-preview-area{display:block}.remark-container.remark-presenter-mode .remark-notes-area{display:block}.remark-container.remark-blackout-mode:not(.remark-presenter-mode) .remark-backdrop{display:block;opacity:.99}.remark-container.remark-mirrored-mode:not(.remark-presenter-mode) .remark-slides-area{-webkit-transform:scaleX(-1);-moz-transform:scaleX(-1);-ms-transform:scaleX(-1);-o-transform:scaleX(-1)}@media print{.remark-container{overflow:visible;background-color:#fff}.remark-container.remark-presenter-mode .remark-slides-area{top:0;left:0;height:100%;width:681px}.remark-container.remark-presenter-mode .remark-preview-area,.remark-container.remark-presenter-mode .remark-notes-area{display:none}.remark-container.remark-presenter-mode .remark-slide-notes{display:block;margin-left:30px;width:621px}.remark-slide-container{display:block;position:relative}.remark-slide-scaler{-moz-box-shadow:none;-webkit-box-shadow:none;-webkit-transform-origin:initial;box-shadow:none}}@page{margin:0}",
   containerLayout: "<div class=\"remark-notes-area\">\n  <div class=\"remark-top-area\">\n    <div class=\"remark-toolbar\">\n      <a class=\"remark-toolbar-link\" href=\"#increase\">+</a>\n      <a class=\"remark-toolbar-link\" href=\"#decrease\">-</a>\n      <span class=\"remark-toolbar-timer\"></span>\n    </div>\n  </div>\n  <div class=\"remark-bottom-area\">\n    <div class=\"remark-notes-current-area\">\n      <div class=\"remark-toggle\">Notes for current slide</div>\n      <div class=\"remark-notes\"></div>\n    </div>\n    <div class=\"remark-notes-preview-area\">\n      <div class=\"remark-toggle\">Notes for next slide</div>\n      <div class=\"remark-notes-preview\"></div>\n    </div>\n  </div>\n</div>\n<div class=\"remark-slides-area\"></div>\n<div class=\"remark-preview-area\"></div>\n<div class=\"remark-backdrop\"></div>\n<div class=\"remark-pause\">\n  <div class=\"remark-pause-lozenge\">\n    <span>Paused</span>\n  </div>\n</div>\n<div class=\"remark-help\">\n  <div class=\"remark-help-content\">\n    <h1>Help</h1>\n    <p><b>Keyboard shortcuts</b></p>\n    <table class=\"light-keys\">\n      <tr>\n        <td>\n          <span class=\"key\"><b>&uarr;</b></span>,\n          <span class=\"key\"><b>&larr;</b></span>,\n          <span class=\"key\">Pg Up</span>,\n          <span class=\"key\">k</span>\n        </td>\n        <td>Go to previous slide</td>\n      </tr>\n      <tr>\n        <td>\n          <span class=\"key\"><b>&darr;</b></span>,\n          <span class=\"key\"><b>&rarr;</b></span>,\n          <span class=\"key\">Pg Dn</span>,\n          <span class=\"key\">Space</span>,\n          <span class=\"key\">j</span>\n        </td>\n        <td>Go to next slide</td>\n      </tr>\n      <tr>\n        <td>\n          <span class=\"key\">Home</span>\n        </td>\n        <td>Go to first slide</td>\n      </tr>\n      <tr>\n        <td>\n          <span class=\"key\">End</span>\n        </td>\n        <td>Go to last slide</td>\n      </tr>\n      <tr>\n        <td>\n          Number + <span class=\"key\">Return</span>\n        </td>\n        <td>Go to specific slide</td>\n      </tr>\n      <tr>\n        <td>\n          <span class=\"key\">b</span>&nbsp;/\n          <span class=\"key\">m</span>&nbsp;/\n          <span class=\"key\">f</span>\n        </td>\n        <td>Toggle blackout / mirrored / fullscreen mode</td>\n      </tr>\n      <tr>\n        <td>\n          <span class=\"key\">c</span>\n        </td>\n        <td>Clone slideshow</td>\n      </tr>\n      <tr>\n        <td>\n          <span class=\"key\">p</span>\n        </td>\n        <td>Toggle presenter mode</td>\n      </tr>\n      <tr>\n        <td>\n          <span class=\"key\">t</span>\n        </td>\n        <td>Restart the presentation timer</td>\n      </tr>\n      <tr>\n        <td>\n          <span class=\"key\">?</span>,\n          <span class=\"key\">h</span>\n        </td>\n        <td>Toggle this help</td>\n      </tr>\n    </table>\n  </div>\n  <div class=\"content dismiss\">\n    <table class=\"light-keys\">\n      <tr>\n        <td>\n          <span class=\"key\">Esc</span>\n        </td>\n        <td>Back to slideshow</td>\n      </tr>\n    </table>\n  </div>\n</div>\n"
 };
 
@@ -19672,8 +19710,7 @@ SlideView.prototype.configureElements = function () {
   self.scalingElement = document.createElement('div');
   self.scalingElement.className = 'remark-slide-scaler';
 
-  self.element = document.createElement('div');
-  self.element.className = 'remark-slide';
+  self.element = createSlideElement(self.slide);
 
   self.contentElement = createContentElement(self.events, self.slideshow, self.slide);
   self.notesElement = createNotesElement(self.slideshow, self.slide.notes);
@@ -19740,6 +19777,17 @@ SlideView.prototype.scaleBackgroundImage = function (dimensions) {
   }
 };
 
+function createSlideElement(slide) {
+  var element = document.createElement('div');
+  element.className = 'remark-slide';
+  
+  if (slide.properties.continued === 'true') {
+    utils.addClass(element, 'remark-slide-incremental');
+  }
+  
+  return element;
+}
+
 function createContentElement (events, slideshow, slide) {
   var element = document.createElement('div');
 
@@ -19769,7 +19817,7 @@ function createNotesElement (slideshow, notes) {
 
   element.className = 'remark-slide-notes';
 
-  element.innerHTML = converter.convertMarkdown(notes);
+  element.innerHTML = converter.convertMarkdown(notes, slideshow.getLinks());
 
   highlightCodeBlocks(element, slideshow);
 
@@ -19848,7 +19896,8 @@ function highlightCodeBlocks (content, slideshow) {
     }
 
     if (highlightSpans) {
-      highlightBlockSpans(block);
+      // highlightSpans is either true or a RegExp
+      highlightBlockSpans(block, highlightSpans);
     }
 
     utils.addClass(block, 'remark-code');
@@ -19891,8 +19940,23 @@ function highlightBlockLines (block, lines) {
   });
 }
 
-function highlightBlockSpans (block) {
-  var pattern = /([^`])`([^`]+?)`/g ;
+/**
+ * @param highlightSpans `true` or a RegExp
+ */
+function highlightBlockSpans (block, highlightSpans) {
+  var pattern;
+  if (highlightSpans === true) {
+    pattern = /([^`])`([^`]+?)`/g;
+  } else if (highlightSpans instanceof RegExp) {
+    if (! highlightSpans.global) {
+      throw new Error('The regular expression in `highlightSpans` must have flag /g');
+    }
+    // Use [^] instead of dot (.) so that even newlines match
+    // We prefix the escape group, so users can provide nicer regular expressions
+    pattern = new RegExp('([^])' + highlightSpans.slice(1, -1), highlightSpans.flags);
+  } else {
+    throw new Error('Illegal value for `highlightSpans`');
+  }
 
   block.childNodes.forEach(function (element) {
     element.innerHTML = element.innerHTML.replace(pattern,
@@ -19905,7 +19969,6 @@ function highlightBlockSpans (block) {
       });
   });
 }
-
 },{"../components/slide-number/slide-number":"components/slide-number","../converter":12,"../highlighter":14,"../utils":24}],27:[function(require,module,exports){
 var SlideView = require('./slideView')
   , Timer = require('../components/timer/timer')
